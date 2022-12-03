@@ -1,16 +1,16 @@
-package com.marvel.communityforum.service;
+package com.marvel.communityforum.util;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class PostServiceTest {
+public class MailClientTest {
     @Autowired
-    private PostService postService;
+    private MailClient mailClient;
 
     @Test
-    public void getOffsetTest() {
-        System.out.println(postService.getOffset(1, 10));
+    public void sendTest() {
+        mailClient.send("", "test", "test");
     }
 }
