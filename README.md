@@ -13,4 +13,10 @@ GET: `/activation/{userId}/{activationCode}`
 - 用户点击激活邮件，服务端激活用户状态
 - userId，用户id
 - activationCode，用户激活码
+### 1.3 用户登陆
+POST: `/login`
+- 验证用户名、激活状态、密码
+- 生成登陆凭证ticket，以cookie形式存储于浏览器，并设置过期时间
+### 1.4 用户退出
+
 ## 2 数据库表

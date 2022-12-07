@@ -1,6 +1,8 @@
 package com.marvel.communityforum.service;
 
+import com.marvel.communityforum.dao.LoginTicketMapper;
 import com.marvel.communityforum.dao.UserMapper;
+import com.marvel.communityforum.entity.LoginTicket;
 import com.marvel.communityforum.entity.User;
 import com.marvel.communityforum.util.CommunityConstant;
 import com.marvel.communityforum.util.CommunityUtil;
@@ -21,6 +23,9 @@ public class UserService implements CommunityConstant {
 
     @Autowired
     private MailClient mailClient;
+
+    @Autowired
+    private LoginTicketMapper loginTicketMapper;
 
     @Value("${community.domain}")
     private String domain;
@@ -63,10 +68,7 @@ public class UserService implements CommunityConstant {
             return map;
         }
 
-        // generate salt after password
-        String salt = CommunityUtil.generateUUID().substring(0, 5);
-
-        user.setPassword(CommunityUtil.md5(user.getPassword() + salt));
+        user.setPassword(CommunityUtil.md5(user.getPassword()));
         user.setUserType(0);
         user.setStatus(0);
         user.setActivationCode(CommunityUtil.generateUUID());
@@ -93,5 +95,44 @@ public class UserService implements CommunityConstant {
             return ACTIVATION_SUCCESS;
         }
         return ACTIVATION_FAILURE;
+    }
+
+    public Map<String, Object> login(String userName, String password, int expiredSeconds) {
+        Map<String, Object> map = new HashMap<>();
+
+        if (StringUtils.isBlank(userName)) {
+            map.put("userNameMsg", "user name is blank");
+            return map;
+        }
+        if (StringUtils.isBlank(password)) {
+            map.put("passwordMsg", "password is blank");
+            return map;
+        }
+
+        // validation
+        User user = userMapper.selectByName(userName);
+        if (user == null) {
+            map.put("userNameMsg", "user name does not exist");
+            return map;
+        }
+        if (user.getStatus() == 0) {
+            map.put("userNameMsg", "user has not been activated");
+            return map;
+        }
+        if (!user.getPassword().equals(CommunityUtil.md5(password))) {
+            map.put("passwordMsg", "incorrect password");
+            return map;
+        }
+
+        // generate login ticket
+        LoginTicket loginTicket = new LoginTicket();
+        loginTicket.setUserId(user.getId());
+        loginTicket.setTicket(CommunityUtil.generateUUID());
+        loginTicket.setStatus(0); // 0 means valid login
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
+        loginTicketMapper.insertTicket(loginTicket);
+
+        map.put("loginTicketMsg", loginTicket.getTicket());
+        return map;
     }
 }
