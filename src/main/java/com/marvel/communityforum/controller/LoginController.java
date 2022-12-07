@@ -52,4 +52,10 @@ public class LoginController implements CommunityConstant {
         }
         return map;
     }
+
+    @GetMapping("/logout")
+    public String logout(@CookieValue("ticket") String ticket) {
+        userService.logout(ticket);
+        return "log out";
+    }
 }

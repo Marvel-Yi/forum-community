@@ -128,11 +128,15 @@ public class UserService implements CommunityConstant {
         LoginTicket loginTicket = new LoginTicket();
         loginTicket.setUserId(user.getId());
         loginTicket.setTicket(CommunityUtil.generateUUID());
-        loginTicket.setStatus(0); // 0 means valid login
+        loginTicket.setStatus(0); // 0 means status login
         loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
         loginTicketMapper.insertTicket(loginTicket);
 
         map.put("loginTicketMsg", loginTicket.getTicket());
         return map;
+    }
+
+    public void logout(String ticket) {
+        loginTicketMapper.updateStatus(ticket, 1); // 1 means status logout
     }
 }
