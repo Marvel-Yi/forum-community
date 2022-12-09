@@ -9,6 +9,6 @@ public class LoginTicket {
     private int id;
     private int userId;
     private String ticket;
-    private int status;
+    private int status; // 0 means login, 1 means logout
     private Date expired;
 }

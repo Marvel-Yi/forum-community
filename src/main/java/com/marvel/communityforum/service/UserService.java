@@ -143,4 +143,22 @@ public class UserService implements CommunityConstant {
     public LoginTicket getLoginTicket(String ticket) {
         return loginTicketMapper.selectByTicket(ticket);
     }
+
+    public int modifyPassword(User user, String originPassword, String newPassword, String repeatPassword) {
+        if (user == null) {
+            return LOGIN_STATUS_EXPIRED;
+        }
+        if (StringUtils.isBlank(originPassword) || StringUtils.isBlank(newPassword) || StringUtils.isBlank(repeatPassword)) {
+            return PASSWORD_BLANK;
+        }
+        if (!user.getPassword().equals(CommunityUtil.md5(originPassword))) {
+            return PASSWORD_INCORRECT;
+        }
+        if (!newPassword.equals(repeatPassword)) {
+            return PASSWORD_REPEAT_INCORRECT;
+        }
+
+        userMapper.updatePassword(user.getId(), CommunityUtil.md5(newPassword));
+        return PASSWORD_MODIFY_SUCCESS;
+    }
 }
