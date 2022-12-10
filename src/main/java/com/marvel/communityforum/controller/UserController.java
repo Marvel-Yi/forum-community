@@ -1,5 +1,6 @@
 package com.marvel.communityforum.controller;
 
+import com.marvel.communityforum.annotation.LoginRequired;
 import com.marvel.communityforum.entity.User;
 import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityConstant;
@@ -22,6 +23,7 @@ public class UserController implements CommunityConstant {
     @Autowired
     private UserService userService;
 
+    @LoginRequired
     @PostMapping("/modify/password")
     public String modifyPassword(String originPassword, String newPassword, String repeatPassword) {
         User user = hostHolder.getUser();

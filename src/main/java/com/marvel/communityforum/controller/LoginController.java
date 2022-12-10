@@ -1,5 +1,6 @@
 package com.marvel.communityforum.controller;
 
+import com.marvel.communityforum.annotation.LoginRequired;
 import com.marvel.communityforum.entity.User;
 import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityConstant;
@@ -53,6 +54,7 @@ public class LoginController implements CommunityConstant {
         return map;
     }
 
+    @LoginRequired
     @GetMapping("/logout")
     public String logout(@CookieValue("ticket") String ticket) {
         userService.logout(ticket);

@@ -23,25 +23,29 @@ GET: `/activation/{userId}/{activationCode}`
 | userId | 用户id      |
 | activationCode  | 用户激活码 |
 - 验证用户激活码，通过后更新数据库用户状态完成激活
-### 1.4 用户登陆
+### 1.4 用户登录
 POST: `/login`
 
 | 参数     | 含义                              |
 |--------|---------------------------------|
 | userName | 用户名                             |
 | password  | 密码                              |
- |rememberMe | 是否记住当前账号，分别对应不同的登陆凭证ticket的过期时间 |
+ |rememberMe | 是否记住当前账号，分别对应不同的登录凭证ticket的过期时间 |
 - 验证用户名、激活状态、密码
-- 生成登陆凭证ticket，以cookie形式存储于浏览器，并设置过期时间
-- 使用拦截器Interceptor处理请求，验证浏览器携带的cookie中的登陆凭证ticket，若ticket存在于数据库中并且状态为已登陆并且未过期，则说明用户处于登陆状态，于是根据LoginTicket查询用户信息，使用ThreadLocal，线程私有地持有此用户信息，以便后续使用，并在模版渲染之前取出ThreadLocal用户信息用于展示，完成后及时清理ThreadLocal对象
+- 生成登录凭证ticket，以cookie形式存储于浏览器，并设置过期时间
+- 使用拦截器Interceptor处理请求，验证浏览器携带的cookie中的登录凭证ticket，若ticket存在于数据库中并且状态为已登录并且未过期，则说明用户处于登录状态，于是根据LoginTicket查询用户信息，使用ThreadLocal，线程私有地持有此用户信息，以便后续使用，并在模版渲染之前取出ThreadLocal用户信息用于展示，完成后及时清理ThreadLocal对象
 ### 1.5 用户退出
 GET: `/logout`
 
-| 参数     | 含义    |
-|--------|-------|
-| ticket | 登陆凭证标识码  |
-- 获取浏览器携带的cookie头部中的登陆凭证ticket信息，将凭证中的登陆状态设为失效
-### 1.6 账户设置
+| 参数     | 含义                |
+|--------|-------------------|
+| ticket | 从cookie获取的登录凭证标识码 |
+- 获取浏览器携带的cookie头部中的登录凭证ticket信息，将凭证中的登录状态设为失效
+### 1.6 检查登录状态
+- 自定义注解标记在需要登录才可访问的方法，每次调用前使用拦截器LoginRequiredInterceptor检查是否需要登录，以及用户是否已登录，验证失败则重定向至首页展示帖子
+- 每次请求到达进入controller之前，使用拦截器检查浏览器发送请求携带的cookie头部中的登录凭证ticket，具体来说，会按照配置类注册拦截器的顺序便利店拦截器，依次验证prehandler方法的boolean返回值
+- 由于LoginTicketInterceptor在LoginRequiredInterceptor之前注册，因此拦截器得到请求后，LoginTicketInterceptor首先验证ticket登录的有效性，若已登陆则线程私有地持有用户信息，以便后续使用和渲染展示用户信息。随后LoginRequiredInterceptor使用反射机制查看请求方法上是否带有需要登录的标记注解，若需要登录则继续检查是否已线程私有地持有了用户信息，若没有则表示未登录，请求失败，重定向到首页
+### 1.7 账户设置
 #### 修改密码
 POST: `/user/modify/password`
 
@@ -51,7 +55,7 @@ POST: `/user/modify/password`
 | newPassword  | 新密码     |
 |repeatPassword | 二次确认新密码 |
 - 验证旧密码，二次确认新密码后完成修改
-- 拦截器通过浏览器携带的cookie查验登陆凭证，确认登陆后，线程私有地持有用户信息，从而进行旧密码的验证
+- 拦截器通过浏览器携带的cookie查验登录凭证，确认登录后，线程私有地持有用户信息，从而进行旧密码的验证
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -66,7 +70,7 @@ public class User {
  private Date createTime;
 }
 ```
-### 2.2 LoginTicket 登陆凭证
+### 2.2 LoginTicket 登录凭证
 ```java
 public class LoginTicket {
     private int id;
@@ -110,7 +114,7 @@ CREATE TABLE `login_ticket` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `ticket` varchar(45) NOT NULL DEFAULT '',
-  `status` int NOT NULL COMMENT '登陆状态，0有效，1无效',
+  `status` int NOT NULL COMMENT '登录状态，0有效，1无效',
   `expired` datetime NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
