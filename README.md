@@ -1,4 +1,5 @@
 # 论坛社区项目后端
+## 0 项目简介
 ## 1 功能描述
 ### 1.1 首页展示
 GET: `/index?current&limit`
@@ -56,6 +57,8 @@ POST: `/user/modify/password`
 |repeatPassword | 二次确认新密码 |
 - 验证旧密码，二次确认新密码后完成修改
 - 拦截器通过浏览器携带的cookie查验登录凭证，确认登录后，线程私有地持有用户信息，从而进行旧密码的验证
+### 1.8 过滤敏感词
+- 使用单词查找树Trie完成过滤，且不受敏感词中间穿插的特殊符号的干扰
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -132,3 +135,5 @@ CREATE TABLE `login_ticket` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
+
+## application.properties 配置项
