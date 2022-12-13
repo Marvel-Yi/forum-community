@@ -2,8 +2,10 @@ package com.marvel.communityforum.service;
 
 import com.marvel.communityforum.dao.PostMapper;
 import com.marvel.communityforum.entity.Post;
+import com.marvel.communityforum.util.SensitiveWordFilterTrie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.List;
 
@@ -11,6 +13,9 @@ import java.util.List;
 public class PostService {
     @Autowired
     private PostMapper postMapper;
+
+    @Autowired
+    private SensitiveWordFilterTrie sensitiveWordFilter;
 
     public List<Post> getAllPost(int current, int limit) {
         return postMapper.selectAllPosts(getOffset(current, limit), limit);
@@ -35,5 +40,19 @@ public class PostService {
     public int getPageCount(int limit) {
         int postCount = postMapper.selectAllPostCount();
         return (postCount + limit - 1) / limit;
+    }
+
+    public int addPost(Post post) {
+        if (post == null) {
+            throw new IllegalArgumentException("post is null");
+        }
+
+        post.setTitle(HtmlUtils.htmlEscape(post.getTitle()));
+        post.setContent(HtmlUtils.htmlEscape(post.getContent()));
+
+        post.setTitle(sensitiveWordFilter.filter(post.getTitle()));
+        post.setContent(sensitiveWordFilter.filter(post.getContent()));
+
+        return postMapper.insertPost(post);
     }
 }

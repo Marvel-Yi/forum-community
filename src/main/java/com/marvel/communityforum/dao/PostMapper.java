@@ -14,4 +14,6 @@ public interface PostMapper {
     List<Post> selectUserPosts(int userId, int offset, int limit);
 
     int selectUserPostCount(int userId);
+
+    int insertPost(Post post);
 }

@@ -1,6 +1,5 @@
 package com.marvel.communityforum.config;
 
-import com.marvel.communityforum.annotation.LoginRequired;
 import com.marvel.communityforum.controller.interceptor.LoginRequiredInterceptor;
 import com.marvel.communityforum.controller.interceptor.LoginTicketInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
