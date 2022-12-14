@@ -55,4 +55,8 @@ public class PostService {
 
         return postMapper.insertPost(post);
     }
+
+    public Post getPostById(int id) {
+        return postMapper.selectPostById(id);
+    }
 }

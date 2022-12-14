@@ -41,4 +41,10 @@
         insert into post (user_id, title, content, post_type, post_status, create_time, comment_count, score)
         values (#{userId}, #{title}, #{content}, #{postType}, #{postStatus}, #{createTime}, #{commentCount}, #{score})
     </insert>
+
+    <select id="selectPostById" resultType="Post">
+        select <include refid="selectFields"></include>
+        from post
+        where id = #{id} and post_status != 2
+    </select>
 </mapper>
