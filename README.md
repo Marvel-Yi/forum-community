@@ -4,10 +4,10 @@
 ### 1.1 首页展示
 GET: `/index?current&limit`
 
-| 参数 | 含义        |
-|---|-----------|
-| current | 当前页码      |
-| limit | 每页可展示的帖子数 |
+| 参数 | 含义          |
+|---|-------------|
+| current | 当前页码        |
+| limit | 每页可展示的帖子文章数 |
 - 首页分页展示文章帖子
 ### 1.2 用户注册
 POST: `/register`
@@ -68,12 +68,16 @@ POST: `/post/publish`
 | content | 帖子内容 |
 - 拦截器先根据浏览器发送的cookie头部验证请求所需要的登录状态，用户输入帖子，敏感词过滤，入库
 ### 1.10 查看帖子
-GET: `/post/detail/{postId}`
+GET: `/post/detail/{postId}/?current&limit`
 
-| 参数      | 含义   |
-|---------|------|
-| postId   | 帖子id |
+| 参数      | 含义          |
+|---------|-------------|
+| postId  | 帖子id        |
+ | current | 当前页码        | 
+ | limit   | 每页可展示的回帖评论数 |
 - 查看帖子详情
+- 分页展示对帖子的评论
+- 每条评论下再展示该评论下所有的回复
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -110,6 +114,19 @@ public class Post {
     private Date createTime;
     private int commentCount;
     private double score; // degree of popularity
+}
+```
+### 2.4 Comment 评论
+```java
+public class Comment {
+    private int id;
+    private int userId;
+    private int subjectType; // 0 means comment on post, 1 means reply to comment
+    private int subjectId; // post id or comment id
+    private int targetId; // id of user who is replied while commenting on the comment of the post
+    private String content;
+    private int status; // 0 normal, 1 deleted
+    private Date createTime;
 }
 ```
 ## 3 数据库
@@ -149,6 +166,18 @@ CREATE TABLE `login_ticket` (
   `score` double DEFAULT NULL COMMENT '帖子热度，用于排名',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+```
+### 3.4 comment
+```
+ `user_id` int NOT NULL,
+  `subject_type` int NOT NULL COMMENT '评论的对象，1帖子（回复帖子），2评论（回复评论）',
+  `subject_id` int NOT NULL COMMENT '被评论对象的id',
+  `target_id` int NOT NULL COMMENT 'subject_type为2时生效，即在某个subject_type为1的评论下，要回复的用户id',
+  `content` text NOT NULL,
+  `status` tinyint unsigned NOT NULL COMMENT '评论状态，0正常，1被删除',
+  `create_time` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
 
 ## application.properties 配置项

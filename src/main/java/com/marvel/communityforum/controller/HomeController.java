@@ -28,7 +28,7 @@ public class HomeController {
             User user = userService.getUserById(post.getUserId());
             Map<String, Object> userPostMap = new HashMap<>();
             userPostMap.put("post", post);
-            userPostMap.put("user", user);
+            userPostMap.put("post author", user);
             userPostMapList.add(userPostMap);
         }
         return userPostMapList;

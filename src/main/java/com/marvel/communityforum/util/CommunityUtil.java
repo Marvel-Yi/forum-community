@@ -39,4 +39,12 @@ public class CommunityUtil {
     public static String getJSONString(int code) {
         return getJSONString(code, null, null);
     }
+
+    public static int getOffset(int current, int limit) {
+        return (current - 1) * limit;
+    }
+
+    public static int getPageCount(int limit, int total) {
+        return (total + limit - 1) / limit;
+    }
 }

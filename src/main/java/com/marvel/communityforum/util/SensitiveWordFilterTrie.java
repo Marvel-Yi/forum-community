@@ -120,9 +120,7 @@ public class SensitiveWordFilterTrie {
                 curNode.setNextNode(c, nextNode);
             }
             curNode = nextNode;
-            if (i == word.length() - 1) {
-                curNode.setIsWordEnding(true);
-            }
         }
+        curNode.setIsWordEnding(true);
     }
 }
