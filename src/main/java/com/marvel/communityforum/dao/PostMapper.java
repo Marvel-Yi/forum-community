@@ -18,4 +18,6 @@ public interface PostMapper {
     int insertPost(Post post);
 
     Post selectPostById(int id);
+
+    int updateCommentCount(int postId, int commentCount);
 }

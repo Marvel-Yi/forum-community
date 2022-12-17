@@ -47,4 +47,9 @@
         from post
         where id = #{id} and post_status != 2
     </select>
+    
+    <update id="updateCommentCount">
+        update post set comment_count = #{commentCount}
+        where id = #{postId}
+    </update>
 </mapper>

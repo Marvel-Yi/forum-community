@@ -51,4 +51,8 @@ public class PostService {
     public Post getPostById(int id) {
         return postMapper.selectPostById(id);
     }
+
+    public int updateCommentCount(int postId, int commentCount) {
+        return postMapper.updateCommentCount(postId, commentCount);
+    }
 }

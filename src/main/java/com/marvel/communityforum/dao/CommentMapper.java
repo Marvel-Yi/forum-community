@@ -10,4 +10,6 @@ public interface CommentMapper {
     List<Comment> selectBySubject(int subjectType, int subjectId, int offset, int limit);
 
     int selectCountBySubject(int subjectType, int subjectId);
+
+    int insertComment(Comment comment);
 }

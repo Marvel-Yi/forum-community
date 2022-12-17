@@ -65,7 +65,7 @@ public class PostController implements CommunityConstant {
                 commentUnderPostVO.put("comment author", userService.getUserById(comment.getUserId()));
 
                 List<Comment> commentsUnderComment = commentService.getCommentBySubject(COMMENT_SUBJECT_TYPE_COMMENT, comment.getId(),
-                        1, Integer.MAX_VALUE);
+                        0, Integer.MAX_VALUE);
                 List<Map<String, Object>> replyVOList = new ArrayList<>();
                 if (commentsUnderComment != null) {
                     for (Comment reply : commentsUnderComment) {
@@ -74,9 +74,7 @@ public class PostController implements CommunityConstant {
                         replyVO.put("reply author", userService.getUserById(reply.getUserId()));
 
                         User replyTargetUser = userService.getUserById(reply.getTargetId());
-                        if (replyTargetUser != null) {
-                            replyVO.put("reply target user", replyTargetUser);
-                        }
+                        replyVO.put("reply target user", replyTargetUser);
 
                         replyVOList.add(replyVO);
                     }

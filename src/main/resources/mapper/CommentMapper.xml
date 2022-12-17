@@ -15,9 +15,15 @@
         limit #{offset}, #{limit}
     </select>
     
-    <select id="selectCountBySubject">
+    <select id="selectCountBySubject" resultType="int">
         select count(id)
         from comment
         where subject_type = #{subjectType} and subject_id = #{subjectId} and status = 0
     </select>
+
+    <insert id="insertComment" parameterType="Comment" keyProperty="id">
+        insert into comment
+        (user_id, subject_type, subject_id, target_id, content, status, create_time)
+        values (#{userId}, #{subjectType}, #{subjectId}, #{targetId}, #{content}, #{status}, #{createTime})
+    </insert>
 </mapper>
