@@ -34,7 +34,7 @@ POST: `/login`
  |rememberMe | 是否记住当前账号，分别对应不同的登录凭证ticket的过期时间 |
 - 验证用户名、激活状态、密码
 - 生成登录凭证ticket，以cookie形式存储于浏览器，并设置过期时间
-- 使用拦截器Interceptor处理请求，验证浏览器携带的cookie中的登录凭证ticket，若ticket存在于数据库中并且状态为已登录并且未过期，则说明用户处于登录状态，于是根据LoginTicket查询用户信息，使用ThreadLocal，线程私有地持有此用户信息，以便后续使用，并在模版渲染之前取出ThreadLocal用户信息用于展示，完成后及时清理ThreadLocal对象
+- 使用拦截器Interceptor处理请求，验证浏览器携带的cookie中的登录凭证ticket，若ticket存在于数据库中并且状态为已登录并且未过期，则说明用户处于登录状态，于是根据LoginTicket查询用户信息，使用ThreadLocal，线程私有地持有此用户信息，以便后续使用，并在模版渲染之前取出ThreadLocal用户信息用于展示，完成后在afterCompletion方法内及时清理ThreadLocal对象
 ### 1.5 用户退出
 GET: `/logout`
 
@@ -43,9 +43,9 @@ GET: `/logout`
 | ticket | 从cookie获取的登录凭证标识码 |
 - 获取浏览器携带的cookie头部中的登录凭证ticket信息，将凭证中的登录状态设为失效
 ### 1.6 检查登录状态
-- 自定义注解标记在需要登录才可访问的方法，每次调用前使用拦截器LoginRequiredInterceptor检查是否需要登录，以及用户是否已登录，验证失败则重定向至首页展示帖子
-- 每次请求到达进入controller之前，使用拦截器检查浏览器发送请求携带的cookie头部中的登录凭证ticket，具体来说，会按照配置类注册拦截器的顺序便利店拦截器，依次验证prehandler方法的boolean返回值
-- 由于LoginTicketInterceptor在LoginRequiredInterceptor之前注册，因此拦截器得到请求后，LoginTicketInterceptor首先验证ticket登录的有效性，若已登陆则线程私有地持有用户信息，以便后续使用和渲染展示用户信息。随后LoginRequiredInterceptor使用反射机制查看请求方法上是否带有需要登录的标记注解，若需要登录则继续检查是否已线程私有地持有了用户信息，若没有则表示未登录，请求失败，重定向到首页
+- 自定义注解，标记在需要登录才可访问的方法上，每次调用前使用拦截器LoginRequiredInterceptor检查是否需要登录，以及用户是否已登录，验证失败则重定向至首页展示帖子
+- 每次请求到达进入controller之前，使用拦截器检查浏览器发送的请求携带的cookie头部中的登录凭证ticket，具体来说，会按照配置类注册拦截器的顺序遍历拦截器，依次验证prehandler方法的boolean返回值
+- 由于LoginTicketInterceptor在LoginRequiredInterceptor之前注册，因此拦截器得到请求后，LoginTicketInterceptor首先验证ticket登录的有效性，若已登陆则线程私有地持有用户信息，以便后续使用和渲染展示用户信息。随后LoginRequiredInterceptor使用反射机制查看请求方法上是否带有需要登录的标记注解，若需要登录，则继续检查是否已线程私有地持有了用户信息，若没有则表示未登录，请求失败，重定向到首页
 ### 1.7 账户设置
 #### 修改密码
 POST: `/user/modify/password`
