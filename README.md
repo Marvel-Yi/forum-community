@@ -88,6 +88,26 @@ POST: `/comment/publish/{postId}`
 - 通过指定参数，选择评论的对象为帖子，或帖子下的评论，或评论下其他用户的回复，评论发布后重定向到对应帖子的详情页
 - 通过@Transactional注解利用事务的ACID特性，评论发布后更新comment表，紧接着将comment表中对应帖子的评论数同步到post表comment_count字段中
 - 需要通过cookie验证登录状态
+### 1.12 私信列表
+GET: `/message/list`
+
+| 参数      | 含义                        |
+|---------|---------------------------|
+| current | 私信列表当前页码                  |
+| limit   | 每页可展示的私信会话数（一个对话目标对应一个会话） |
+- 分页展示私信会话列表，列表中每个会话只展示与对话目标最新的一条消息
+- 展示总的未读消息数，展示每个会话的未读消息数和总消息数，展示每个对话目标的用户信息
+- 使用group by按会话分组查询每组会话的最新消息，即最大id（id按时间升序），展示时按id降序，即按时间由新到旧
+### 1.13 私信详情
+GET: `/message/detail/{conversationId}`
+
+| 参数             | 含义           |
+|----------------|--------------|
+| conversationId | 会话id         |
+| current        | 会话内当前页码      | 
+| limit          | 会话内每页可展示的消息数 |
+- 分页展示每个会话内的所有消息，展示消息发送者，会话对象
+- 展示时按id降序，即按时间由新到旧
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -139,10 +159,23 @@ public class Comment {
     private Date createTime;
 }
 ```
+### 2.5 Message 私信
+```java
+public class Message {
+    private int id;
+    private int fromId;
+    private int toId;
+    private String conversationId;
+    private String content;
+    private int status; // 0 read, 1 unread, 2 deleted
+    private Date createTime;
+}
+```
 ## 3 数据库
 ### 3.1 user
-```
-`id` int unsigned NOT NULL AUTO_INCREMENT,
+```mysql
+CREATE TABLE `user` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `user_name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
   `password` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
   `email` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
@@ -151,22 +184,24 @@ public class Comment {
   `activation_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `create_time` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
 ### 3.2 login_ticket
-```
+```mysql
 CREATE TABLE `login_ticket` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `ticket` varchar(45) NOT NULL DEFAULT '',
-  `status` int NOT NULL COMMENT '登录状态，0有效，1无效',
+  `status` int NOT NULL COMMENT '登陆状态，0有效，1无效',
   `expired` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
 ### 3.3 post
-```
-`user_id` int NOT NULL,
+```mysql
+CREATE TABLE `post` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
   `title` varchar(100) DEFAULT NULL,
   `content` text,
   `post_type` int NOT NULL COMMENT '帖子类型，0普通，1置顶',
@@ -175,16 +210,31 @@ CREATE TABLE `login_ticket` (
   `comment_count` int DEFAULT NULL COMMENT '评论数，冗余字段，防止频繁关联查询',
   `score` double DEFAULT NULL COMMENT '帖子热度，用于排名',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
 ### 3.4 comment
-```
- `user_id` int NOT NULL,
+```mysql
+CREATE TABLE `comment` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
   `subject_type` int NOT NULL COMMENT '评论的对象，1帖子（回复帖子），2评论（回复评论）',
   `subject_id` int NOT NULL COMMENT '被评论对象的id',
   `target_id` int NOT NULL COMMENT 'subject_type为2时生效，即在某个subject_type为1的评论下，要回复的用户id',
   `content` text NOT NULL,
   `status` tinyint unsigned NOT NULL COMMENT '评论状态，0正常，1被删除',
+  `create_time` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+```
+### 3.5 message
+```mysql
+CREATE TABLE `message` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `from_id` int NOT NULL,
+  `to_id` int NOT NULL,
+  `conversation_id` varchar(20) NOT NULL DEFAULT '' COMMENT '冗余字段，方便查询会话，由from_id和to_id升序拼接',
+  `content` text NOT NULL,
+  `status` int NOT NULL COMMENT '0未读，1已读，2已删除',
   `create_time` datetime NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
