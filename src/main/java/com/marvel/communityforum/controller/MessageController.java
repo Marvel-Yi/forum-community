@@ -8,15 +8,9 @@ import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityUtil;
 import com.marvel.communityforum.util.HostHolder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 public class MessageController {
@@ -64,8 +58,8 @@ public class MessageController {
     @LoginRequired
     @GetMapping("/message/detail/{conversationId}")
     public Map<String, Object> getConversationDetail(@PathVariable("conversationId") String conversationId,
-                                        @RequestParam(name = "current", defaultValue = "1") int current,
-                                        @RequestParam(name = "limit", defaultValue = "10") int limit) {
+                                                     @RequestParam(name = "current", defaultValue = "1") int current,
+                                                     @RequestParam(name = "limit", defaultValue = "10") int limit) {
         List<Message> messageList = messageService.getConversationMessages(conversationId,
                 CommunityUtil.getOffset(current, limit), limit);
         List<Map<String, Object>> detailList = new ArrayList<>();
@@ -82,6 +76,11 @@ public class MessageController {
         detailMap.put("messages", detailList);
         detailMap.put("conversationTargetUser", getConversationTarget(conversationId));
 
+        List<Integer> unreadMessageIds = getUnreadMessageIds(messageList);
+        if (!unreadMessageIds.isEmpty()) {
+            messageService.readMessage(unreadMessageIds);
+        }
+
         return detailMap;
     }
 
@@ -95,5 +94,39 @@ public class MessageController {
         } else {
             return userService.getUserById(id1);
         }
+    }
+
+    private List<Integer> getUnreadMessageIds(List<Message> messages) {
+        List<Integer> unreadMessageIds = new ArrayList<>();
+        if (messages != null) {
+            for (Message message : messages) {
+                if (message.getToId() == hostHolder.getUser().getId() && message.getStatus() == 0) {
+                    unreadMessageIds.add(message.getId());
+                }
+            }
+        }
+        return unreadMessageIds;
+    }
+
+    @LoginRequired
+    @PostMapping("/message/send")
+    public String sendMessage(String toName, String content) {
+        User toUser = userService.getUserByName(toName);
+        if (toUser == null) {
+            return CommunityUtil.getJSONString(1, "target user not exist");
+        }
+        Message message = new Message();
+        message.setFromId(hostHolder.getUser().getId());
+        message.setToId(toUser.getId());
+        if (message.getFromId() < message.getToId()) {
+            message.setConversationId(message.getFromId() + "-" + message.getToId());
+        } else {
+            message.setConversationId(message.getToId() + "-" + message.getFromId());
+        }
+        message.setContent(content);
+        message.setCreateTime(new Date());
+        messageService.addMessage(message);
+
+        return CommunityUtil.getJSONString(0, "send message succeeded");
     }
 }

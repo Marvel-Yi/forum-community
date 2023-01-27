@@ -2,6 +2,7 @@ package com.marvel.communityforum.service;
 
 import com.marvel.communityforum.dao.MessageMapper;
 import com.marvel.communityforum.entity.Message;
+import com.marvel.communityforum.util.SensitiveWordFilterTrie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,9 @@ import java.util.List;
 public class MessageService {
     @Autowired
     private MessageMapper messageMapper;
+
+    @Autowired
+    private SensitiveWordFilterTrie sensitiveWordFilter;
 
     public List<Message> getConversations(int userId, int offset, int limit) {
         return messageMapper.selectConversationLatestMessage(userId, offset, limit);
@@ -34,5 +38,14 @@ public class MessageService {
 
     public int getConversationUnreadMessageCount(int userId, String conversationId) {
         return messageMapper.selectConversationUnreadMessageCount(userId, conversationId);
+    }
+
+    public int addMessage(Message message) {
+        message.setContent(sensitiveWordFilter.filter(message.getContent()));
+        return messageMapper.insertMessage(message);
+    }
+
+    public int readMessage(List<Integer> messageIds) {
+        return messageMapper.updateMessageStatus(messageIds, 1);
     }
 }

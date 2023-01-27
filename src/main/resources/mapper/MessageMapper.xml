@@ -8,13 +8,14 @@
     </sql>
 
     <select id="selectConversationLatestMessage" resultType="Message">
-        select <include refid="selectFields"></include>
+        select
+        <include refid="selectFields"></include>
         from message
         where id in (
-            select max(id) from message
-            where (from_id = #{userId} or to_id = #{userId})
-            and status != 2 and from_id != 1
-            group by conversation_id
+        select max(id) from message
+        where (from_id = #{userId} or to_id = #{userId})
+        and status != 2 and from_id != 1
+        group by conversation_id
         )
         order by id desc
         limit #{offset}, #{limit}
@@ -30,7 +31,8 @@
     </select>
 
     <select id="selectConversationMessages" resultType="Message">
-        select <include refid="selectFields"></include>
+        select
+        <include refid="selectFields"></include>
         from message
         where conversation_id = #{conversationId} and status != 2 and from_id != 1
         order by id desc
@@ -54,4 +56,17 @@
         where to_id = #{userId} and conversation_id = #{conversationId}
         and status = 0 and from_id != 1
     </select>
+
+    <insert id="insertMessage" parameterType="Message" keyProperty="id">
+        insert into message (from_id, to_id, conversation_id, content, status, create_time)
+        values (#{fromId}, #{toId}, #{conversationId}, #{content}, #{status}, #{createTime})
+    </insert>
+    
+    <update id="updateMessageStatus">
+        update message set status = #{status}
+        where id in
+        <foreach collection="messageIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 </mapper>
