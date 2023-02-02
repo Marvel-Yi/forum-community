@@ -33,4 +33,9 @@ public class HomeController {
         }
         return userPostMapList;
     }
+
+    @GetMapping("/error")
+    public String getErrorPage() {
+        return "500, server error";
+    }
 }
