@@ -5,6 +5,7 @@ import com.marvel.communityforum.entity.Comment;
 import com.marvel.communityforum.entity.Post;
 import com.marvel.communityforum.entity.User;
 import com.marvel.communityforum.service.CommentService;
+import com.marvel.communityforum.service.LikeService;
 import com.marvel.communityforum.service.PostService;
 import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityConstant;
@@ -30,6 +31,9 @@ public class PostController implements CommunityConstant {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private LikeService likeService;
+
     @LoginRequired
     @PostMapping("/publish")
     public String publishPost(String title, String content) {
@@ -49,11 +53,16 @@ public class PostController implements CommunityConstant {
                                                  @RequestParam(name = "current", defaultValue = "1") int current,
                                                  @RequestParam(name = "limit", defaultValue = "5") int limit) {
         Map<String, Object> postMap = new HashMap<>();
+        User user = hostHolder.getUser();
 
         Post post = postService.getPostById(postId);
-        User user = userService.getUserById(post.getUserId());
+        User author = userService.getUserById(post.getUserId());
+        long likeCount = likeService.getLikeCount(COMMENT_SUBJECT_TYPE_POST, postId);
+        int likeStatus = user == null ? 0 : likeService.getLikeStatus(user.getId(), COMMENT_SUBJECT_TYPE_POST, postId);
         postMap.put("post", post);
-        postMap.put("post author", user);
+        postMap.put("post author", author);
+        postMap.put("like count", likeCount);
+        postMap.put("like status", likeStatus);
 
         List<Comment> commentsUnderPost = commentService.getCommentBySubject(COMMENT_SUBJECT_TYPE_POST, postId,
                 CommunityUtil.getOffset(current, limit), limit);
@@ -63,6 +72,11 @@ public class PostController implements CommunityConstant {
                 Map<String, Object> commentUnderPostVO = new HashMap<>();
                 commentUnderPostVO.put("comment", comment);
                 commentUnderPostVO.put("comment author", userService.getUserById(comment.getUserId()));
+
+                long commentLikeCount = likeService.getLikeCount(COMMENT_SUBJECT_TYPE_COMMENT, comment.getId());
+                int commentLikeStatus = user == null ? 0 : likeService.getLikeStatus(user.getId(), COMMENT_SUBJECT_TYPE_COMMENT, comment.getId());
+                commentUnderPostVO.put("comment like count", commentLikeCount);
+                commentUnderPostVO.put("comment like status", commentLikeStatus);
 
                 List<Comment> commentsUnderComment = commentService.getCommentBySubject(COMMENT_SUBJECT_TYPE_COMMENT, comment.getId(),
                         0, Integer.MAX_VALUE);
@@ -75,6 +89,11 @@ public class PostController implements CommunityConstant {
 
                         User replyTargetUser = userService.getUserById(reply.getTargetId());
                         replyVO.put("reply target user", replyTargetUser);
+
+                        long replyLikeCount = likeService.getLikeCount(COMMENT_SUBJECT_TYPE_COMMENT, reply.getId());
+                        int replyLikeStatus = user == null ? 0 : likeService.getLikeStatus(user.getId(), COMMENT_SUBJECT_TYPE_COMMENT, reply.getId());
+                        replyVO.put("reply like count", replyLikeCount);
+                        replyVO.put("reply like status", replyLikeStatus);
 
                         replyVOList.add(replyVO);
                     }

@@ -78,6 +78,7 @@ GET: `/post/detail/{postId}/?current&limit`
 - 查看帖子详情
 - 分页展示对此帖子的评论
 - 每条评论下再展示对此评论的所有回复，这些回复有的是直接回复评论，有的是回复评论下其他用户的回复
+- 展示帖子、评论、回复的点赞信息
 ### 1.11 评论
 POST: `/comment/publish/{postId}`
 
@@ -125,6 +126,15 @@ POST: `/message/send`
 - 使用@Component、@Aspect注解定义切面组件，将系统功能封装至其中。
 - 使用@Pointcut注解修饰方法来声明切点，即声明系统代码要织入到项目的哪些连接点joinpoint中（常用的连接点就是指业务组件中的方法）
 - 定义通知advice，并声明作用在什么切点pointcut上（带@Pointcut注解的方法名）。常用的通知注解有@Before（joinpoint执行前生效），@After（joinpoint执行后生效），@Around（joinpoint执行前后生效），@AfterReturning（joinpoint返回后生效），@AfterThrowing（joinpoint抛出异常后生效）
+### 1.16 点赞
+POST: `/like`
+
+| 参数          | 含义             |
+|-------------|----------------|
+| subjectType | 点赞目标的类型（帖子、评论） |
+| subjectId   | 点赞目标id         |
+- 基于redis实现对帖子、评论、回复的点赞功能，并显示点赞数和是否已点赞，第二次点赞将会取消之前的点赞
+- 成功点赞后通过add把点赞用户的id存入redis set中，取消点赞则通过remove把id从set中移除，通过size统计点赞数，通过isMember查询是否已点赞
 ## 2 实体
 ### 2.1 User 用户
 ```java
