@@ -2,15 +2,17 @@ package com.marvel.communityforum.controller;
 
 import com.marvel.communityforum.annotation.LoginRequired;
 import com.marvel.communityforum.entity.User;
+import com.marvel.communityforum.service.LikeService;
 import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityConstant;
 import com.marvel.communityforum.util.HostHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -22,6 +24,9 @@ public class UserController implements CommunityConstant {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private LikeService likeService;
 
     @LoginRequired
     @PostMapping("/modify/password")
@@ -41,5 +46,19 @@ public class UserController implements CommunityConstant {
             return "new password confirmation failed, please repeat new password";
         }
         return "password modify succeed";
+    }
+
+    @GetMapping("/profile/{userId}")
+    public Map<String, Object> getProfilePage(@PathVariable("userId") int userId) {
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            throw new RuntimeException();
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("user", user);
+        int likeCount = likeService.getUserLikeCount(userId);
+        map.put("user like count", likeCount);
+        return map;
     }
 }

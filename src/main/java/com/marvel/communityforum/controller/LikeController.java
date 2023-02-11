@@ -21,10 +21,10 @@ public class LikeController {
 
     @LoginRequired
     @PostMapping("/like")
-    public String like(int subjectType, int subjectId) {
+    public String like(int subjectType, int subjectId, int subjectAuthorId) {
         User user = hostHolder.getUser();
 
-        likeService.like(user.getId(), subjectType, subjectId);
+        likeService.like(user.getId(), subjectType, subjectId, subjectAuthorId);
         long likeCount = likeService.getLikeCount(subjectType, subjectId);
         int likeStatus = likeService.getLikeStatus(user.getId(), subjectType, subjectId);
 

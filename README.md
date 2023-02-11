@@ -129,12 +129,22 @@ POST: `/message/send`
 ### 1.16 点赞
 POST: `/like`
 
-| 参数          | 含义             |
-|-------------|----------------|
-| subjectType | 点赞目标的类型（帖子、评论） |
-| subjectId   | 点赞目标id         |
+| 参数              | 含义             |
+|-----------------|----------------|
+| subjectType     | 点赞目标的类型（帖子、评论） |
+| subjectId       | 点赞目标id         |
+| subjectAuthorId | 点赞目标的作者id      |
 - 基于redis实现对帖子、评论、回复的点赞功能，并显示点赞数和是否已点赞，第二次点赞将会取消之前的点赞
-- 成功点赞后通过add把点赞用户的id存入redis set中，取消点赞则通过remove把id从set中移除，通过size统计点赞数，通过isMember查询是否已点赞
+- 使用set存储帖子和评论的点赞数，点赞成功后通过add把点赞用户的id存入set中，取消点赞则通过remove把id从set中移除，通过size统计点赞数，通过isMember查询是否已点赞
+- 使用string存储用户收到的点赞数，点赞成功和取消点赞分别通过increment和decrement来更新点赞数
+- 上述两步使用redis事务来执行，重写SessionCallback的execute方法，使用multi方法开启事务，exec提交事务。redis事务不具备原子性，只是将命令一次性提交到队列中再按序逐个执行。
+### 1.17 个人主页
+GET: `/profile/{userId}`
+
+| 参数             | 含义         |
+|----------------|------------|
+| userId | 用户id |
+- 根据用户id查询个人主页，展示个人信息、获赞数
 ## 2 实体
 ### 2.1 User 用户
 ```java
