@@ -24,4 +24,6 @@ public interface CommunityConstant {
     int COMMENT_SUBJECT_TYPE_POST = 1;
 
     int COMMENT_SUBJECT_TYPE_COMMENT = 2;
+
+    int SUBJECT_TYPE_USER = 3;
 }

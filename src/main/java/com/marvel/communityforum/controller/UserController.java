@@ -2,6 +2,7 @@ package com.marvel.communityforum.controller;
 
 import com.marvel.communityforum.annotation.LoginRequired;
 import com.marvel.communityforum.entity.User;
+import com.marvel.communityforum.service.FollowService;
 import com.marvel.communityforum.service.LikeService;
 import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityConstant;
@@ -28,6 +29,9 @@ public class UserController implements CommunityConstant {
     @Autowired
     private LikeService likeService;
 
+    @Autowired
+    private FollowService followService;
+
     @LoginRequired
     @PostMapping("/modify/password")
     public String modifyPassword(String originPassword, String newPassword, String repeatPassword) {
@@ -52,13 +56,24 @@ public class UserController implements CommunityConstant {
     public Map<String, Object> getProfilePage(@PathVariable("userId") int userId) {
         User user = userService.getUserById(userId);
         if (user == null) {
-            throw new RuntimeException();
+            throw new RuntimeException("user not exist, unable to visit user profile");
         }
 
         Map<String, Object> map = new HashMap<>();
         map.put("user", user);
+
         int likeCount = likeService.getUserLikeCount(userId);
         map.put("user like count", likeCount);
+
+        long followCount = followService.getFollowCount(userId, SUBJECT_TYPE_USER);
+        map.put("follow count", followCount);
+
+        long fansCount = followService.getFansCount(SUBJECT_TYPE_USER, userId);
+        map.put("fans count", fansCount);
+
+        boolean hasFollowed = hostHolder.getUser() != null && followService.hasFollowed(hostHolder.getUser().getId(), SUBJECT_TYPE_USER, userId);
+        map.put("has followed", hasFollowed);
+
         return map;
     }
 }

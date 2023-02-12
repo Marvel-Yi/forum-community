@@ -138,13 +138,25 @@ POST: `/like`
 - 使用set存储帖子和评论的点赞数，点赞成功后通过add把点赞用户的id存入set中，取消点赞则通过remove把id从set中移除，通过size统计点赞数，通过isMember查询是否已点赞
 - 使用string存储用户收到的点赞数，点赞成功和取消点赞分别通过increment和decrement来更新点赞数
 - 上述两步使用redis事务来执行，重写SessionCallback的execute方法，使用multi方法开启事务，exec提交事务。redis事务不具备原子性，只是将命令一次性提交到队列中再按序逐个执行。
-### 1.17 个人主页
-GET: `/profile/{userId}`
+### 1.17 关注
+POST: `/follow`
+POST: `/unfollow`
+
+| 参数              | 含义             |
+|-----------------|----------------|
+| subjectType     | 关注目标的类型（帖子、用户） |
+| subjectId       | 关注目标id         |
+- 关注和取消关注不同类型的对象（帖子、用户）
+- 使用两个zset分别维护关注列表与粉丝列表，存储关注对象的id，并将其加入有序集合的时间作为score，实现按时间先后排序
+- 每个用户的关注列表根据关注对象的类型使用不同的zset，键名中使用subjectType来区分，每个对象的粉丝列表的键名中也记录自身的类型，粉丝列表存储的是用户id
+- 每次关注和取消关注都要更新关注列表和粉丝列表，通过execute、multi、exec方法使用redis事务来处理
+### 1.18 个人主页
+GET: `/user/profile/{userId}`
 
 | 参数             | 含义         |
 |----------------|------------|
 | userId | 用户id |
-- 根据用户id查询个人主页，展示个人信息、获赞数
+- 根据用户id查询个人主页，展示个人信息、获赞数、关注数、粉丝数，以及当前登陆用户是否已关注正在访问的用户
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -276,5 +288,5 @@ CREATE TABLE `message` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
-
+## 4 Redis
 ## application.properties 配置项
