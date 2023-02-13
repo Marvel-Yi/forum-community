@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class LikeService {
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate redisTemplate;
 
     public void like(int userId, int subjectType, int subjectId, int subjectAuthorId) {
         redisTemplate.execute(new SessionCallback() {
