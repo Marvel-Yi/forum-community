@@ -35,6 +35,11 @@ POST: `/login`
 - 验证用户名、激活状态、密码
 - 生成登录凭证ticket，以cookie形式存储于浏览器，并设置过期时间
 - 使用拦截器Interceptor处理请求，验证浏览器携带的cookie中的登录凭证ticket，若ticket存在于数据库中并且状态为已登录并且未过期，则说明用户处于登录状态，于是根据LoginTicket查询用户信息，使用ThreadLocal，线程私有地持有此用户信息，以便后续使用，并在模版渲染之前取出ThreadLocal用户信息用于展示，完成后在afterCompletion方法内及时清理ThreadLocal对象
+#### 优化
+- 使用redis缓存登陆凭证和用户信息，优化查询性能
+- 由于存在大量请求需要验证cookie中的登陆凭证，并通过凭证查询用户信息，分别对应两次数据库查询（ticket表和user表），性能较低，故考虑使用redis作为缓存
+- 分别将登陆凭证ticket对象和用户信息user对象序列化并使用redis string存储，每次请求通过查询redis缓存验证cookie中的登陆凭证，同样地，通过凭证中的id查询redis缓存获取用户信息
+- 对用户信息user对象采用**旁路缓存**的读写策略（Cache Aside Pattern），读取时首先尝试从缓存中获取，获取成功直接返回，获取不到则查询数据库，并缓存到redis中再返回。更新时，先更新数据库，然后删除缓存上的旧数据，以保证缓存和数据库的数据一致性
 ### 1.5 用户退出
 GET: `/logout`
 

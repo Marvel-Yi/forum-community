@@ -6,6 +6,8 @@ public class RedisKeyUtil {
     private static final String PREFIX_LIKE_USER = "like:user";
     private static final String PREFIX_FANS = "fans";
     private static final String PREFIX_FOLLOW = "follow";
+    private static final String PREFIX_LOGIN_TICKET = "ticket";
+    private static final String PREFIX_USER = "user";
 
     public static String getLikeKey(int subjectType, int subjectId) {
         return PREFIX_LIKE + SEPARATOR + subjectType + SEPARATOR + subjectId;
@@ -21,5 +23,13 @@ public class RedisKeyUtil {
 
     public static String getFollowKey(int userId, int subjectType) {
         return PREFIX_FOLLOW + SEPARATOR + userId + SEPARATOR + subjectType;
+    }
+
+    public static String getLoginTicketKey(String ticket) {
+        return PREFIX_LOGIN_TICKET + SEPARATOR + ticket;
+    }
+
+    public static String getUserKey(int userId) {
+        return PREFIX_USER + SEPARATOR + userId;
     }
 }
