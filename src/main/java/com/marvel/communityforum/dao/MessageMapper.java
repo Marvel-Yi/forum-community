@@ -30,4 +30,6 @@ public interface MessageMapper {
     int selectUnreadSystemMessageCount(int userId, String topic);
 
     int selectTotalUnreadSystemMessageCount(int userId);
+
+    List<Message> selectSystemNotifications(int userId, String topic, int offset, int limit);
 }

@@ -64,4 +64,8 @@ public class MessageService {
     public int getTotalUnreadSystemMsgCnt(int userId) {
         return messageMapper.selectTotalUnreadSystemMessageCount(userId);
     }
+
+    public List<Message> getSystemNotifications(int userId, String topic, int offset, int limit) {
+        return messageMapper.selectSystemNotifications(userId, topic, offset, limit);
+    }
 }

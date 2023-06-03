@@ -189,4 +189,39 @@ public class MessageController implements CommunityConstant {
 
         return VO;
     }
+
+    @LoginRequired
+    @GetMapping("/notification/detail/{topic}")
+    public Map<String, Object> getNotificationDetail(@PathVariable("topic") String topic,
+                                                     @RequestParam(name = "limit", defaultValue = "20") int limit,
+                                                     @RequestParam(name = "current", defaultValue = "1") int current) {
+        int offset = CommunityUtil.getOffset(current, limit);
+        User user = hostHolder.getUser();
+        List<Message> notifications = messageService.getSystemNotifications(user.getId(), topic, offset, limit);
+        List<Map<String, Object>> notificationVOList = new ArrayList<>();
+        if (notifications != null) {
+            for (Message notification : notifications) {
+                Map<String, Object> VO = new HashMap<>();
+                VO.put("notification", notification);
+                String content = notification.getContent();
+                Map<String, Object> contentMap = JSONObject.parseObject(content, HashMap.class);
+                VO.put("notifier", userService.getUserById((Integer) contentMap.get("userId")));
+                VO.put("subjectType", contentMap.get("subjectType"));
+                VO.put("subjectId", contentMap.get("subjectId"));
+                VO.put("postId", contentMap.get("postId"));
+
+                notificationVOList.add(VO);
+            }
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("notificationVOList", notificationVOList);
+
+        List<Integer> unreadNotificationIds = getUnreadMessageIds(notifications);
+        if (!unreadNotificationIds.isEmpty()) {
+            messageService.readMessage(unreadNotificationIds);
+        }
+
+        return res;
+    }
 }
