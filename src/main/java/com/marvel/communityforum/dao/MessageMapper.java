@@ -22,4 +22,12 @@ public interface MessageMapper {
     int insertMessage(Message message);
 
     int updateMessageStatus(List<Integer> messageIds, int status);
+
+    Message selectSystemLatestMessage(int userId, String topic);
+
+    int selectSystemMessageCount(int userId, String topic);
+
+    int selectUnreadSystemMessageCount(int userId, String topic);
+
+    int selectTotalUnreadSystemMessageCount(int userId);
 }

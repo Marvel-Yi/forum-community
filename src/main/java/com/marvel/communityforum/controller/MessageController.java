@@ -1,10 +1,12 @@
 package com.marvel.communityforum.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.marvel.communityforum.annotation.LoginRequired;
 import com.marvel.communityforum.entity.Message;
 import com.marvel.communityforum.entity.User;
 import com.marvel.communityforum.service.MessageService;
 import com.marvel.communityforum.service.UserService;
+import com.marvel.communityforum.util.CommunityConstant;
 import com.marvel.communityforum.util.CommunityUtil;
 import com.marvel.communityforum.util.HostHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-public class MessageController {
+public class MessageController implements CommunityConstant {
     @Autowired
     private MessageService messageService;
 
@@ -48,10 +50,12 @@ public class MessageController {
         }
 
         int unreadMessageCount = messageService.getUnreadMessageCount(user.getId());
+        int unreadSysNotificationCnt = messageService.getTotalUnreadSystemMsgCnt(user.getId());
 
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("conversations", conversations);
-        resultMap.put("unreadCount", unreadMessageCount);
+        resultMap.put("unreadMessageCnt", unreadMessageCount);
+        resultMap.put("unreadSystemNotificationCnt", unreadSysNotificationCnt);
         return resultMap;
     }
 
@@ -128,5 +132,61 @@ public class MessageController {
         messageService.addMessage(message);
 
         return CommunityUtil.getJSONString(0, "send message succeeded");
+    }
+
+    @LoginRequired
+    @GetMapping("/notification/list")
+    public Map<String, Object> getNotificationList() {
+        Map<String, Object> VO = new HashMap<>();
+        User user = hostHolder.getUser();
+
+        Message commentNotification = messageService.getSystemNotification(user.getId(), TOPIC_COMMENT);
+        Map<String, Object> commentVO = new HashMap<>();
+        if (commentNotification != null) {
+            commentVO.put("message", commentNotification);
+            String content = commentNotification.getContent();
+            Map<String, Object> notificationContent = JSONObject.parseObject(content, HashMap.class);
+            commentVO.put("notifierUser", userService.getUserById((Integer) notificationContent.get("userId")));
+            commentVO.put("subjectType", notificationContent.get("subjectType"));
+            commentVO.put("subjectId", notificationContent.get("subjectId"));
+            commentVO.put("postId", notificationContent.get("postId"));
+            commentVO.put("notificationCount", messageService.getSystemNotificationMessageCount(user.getId(), TOPIC_COMMENT));
+            commentVO.put("unreadCount", messageService.getUnreadSystemMessageCount(user.getId(), TOPIC_COMMENT));
+        }
+        VO.put("commentNotification", commentVO);
+
+        Message likeNotification = messageService.getSystemNotification(user.getId(), TOPIC_LIKE);
+        Map<String, Object> likeVO = new HashMap<>();
+        if (likeNotification != null) {
+            likeVO.put("message", likeNotification);
+            String content = likeNotification.getContent();
+            Map<String, Object> notificationContent = JSONObject.parseObject(content, HashMap.class);
+            likeVO.put("notifierUser", userService.getUserById((Integer) notificationContent.get("userId")));
+            likeVO.put("subjectType", notificationContent.get("subjectType"));
+            likeVO.put("subjectId", notificationContent.get("subjectId"));
+            likeVO.put("postId", notificationContent.get("postId"));
+            likeVO.put("notificationCount", messageService.getSystemNotificationMessageCount(user.getId(), TOPIC_LIKE));
+            likeVO.put("unreadCount", messageService.getUnreadSystemMessageCount(user.getId(), TOPIC_LIKE));
+        }
+        VO.put("likeNotification", likeVO);
+
+        Message followNotification = messageService.getSystemNotification(user.getId(), TOPIC_FOLLOW);
+        Map<String, Object> followVO = new HashMap<>();
+        if (followNotification != null) {
+            followVO.put("message", followNotification);
+            String content = followNotification.getContent();
+            Map<String, Object> notificationContent = JSONObject.parseObject(content, HashMap.class);
+            followVO.put("notifierUser", userService.getUserById((Integer) notificationContent.get("userId")));
+            followVO.put("subjectType", notificationContent.get("subjectType"));
+            followVO.put("subjectId", notificationContent.get("subjectId"));
+            followVO.put("notificationCount", messageService.getSystemNotificationMessageCount(user.getId(), TOPIC_FOLLOW));
+            followVO.put("unreadCount", messageService.getUnreadSystemMessageCount(user.getId(), TOPIC_FOLLOW));
+        }
+        VO.put("followNotification", followVO);
+
+        VO.put("totalUnreadNotificationCount", messageService.getTotalUnreadSystemMsgCnt(user.getId()));
+        VO.put("totalUnreadConversationMessageCount", messageService.getUnreadMessageCount(user.getId()));
+
+        return VO;
     }
 }

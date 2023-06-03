@@ -48,4 +48,20 @@ public class MessageService {
     public int readMessage(List<Integer> messageIds) {
         return messageMapper.updateMessageStatus(messageIds, 1);
     }
+
+    public Message getSystemNotification(int userId, String topic) {
+        return messageMapper.selectSystemLatestMessage(userId, topic);
+    }
+
+    public int getSystemNotificationMessageCount(int userId, String topic) {
+        return messageMapper.selectSystemMessageCount(userId, topic);
+    }
+
+    public int getUnreadSystemMessageCount(int userId, String topic) {
+        return messageMapper.selectUnreadSystemMessageCount(userId, topic);
+    }
+
+    public int getTotalUnreadSystemMsgCnt(int userId) {
+        return messageMapper.selectTotalUnreadSystemMessageCount(userId);
+    }
 }

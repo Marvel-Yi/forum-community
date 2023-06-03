@@ -134,11 +134,12 @@ POST: `/message/send`
 ### 1.16 点赞
 POST: `/like`
 
-| 参数              | 含义             |
-|-----------------|----------------|
+| 参数              | 含义            |
+|-----------------|---------------|
 | subjectType     | 点赞目标的类型（帖子、评论） |
-| subjectId       | 点赞目标id         |
-| subjectAuthorId | 点赞目标的作者id      |
+| subjectId       | 点赞目标id        |
+| subjectAuthorId | 点赞目标的作者id     |
+| postId          | 点赞目标所在的帖子id   |
 - 基于redis实现对帖子、评论、回复的点赞功能，并显示点赞数和是否已点赞，第二次点赞将会取消之前的点赞
 - 使用set存储帖子和评论的点赞数，点赞成功后通过add把点赞用户的id存入set中，取消点赞则通过remove把id从set中移除，通过size统计点赞数，通过isMember查询是否已点赞
 - 使用string存储用户收到的点赞数，点赞成功和取消点赞分别通过increment和decrement来更新点赞数
@@ -174,6 +175,11 @@ GET: `/fans/list/{userId}`
 | current | 用户关注或粉丝列表的当前页码   |
 | limit   | 关注或粉丝列表每页可展示的用户数 |
 - 分页展示指定用户的关注列表或粉丝列表，展示被关注者或粉丝的信息，关注或被关注的时间，以及当前登陆用户是否已关注列表中的用户
+### 1.20 系统通知列表
+GET: `/notification/list`
+- 分评论、点赞、关注三个对话框显示系统通知，每个对话框显示该对话内最新的一条消息，同时显示对话的消息总数，对话的未读消息数，以及用户三类系统消息的未读消息数
+- 使用Kafka存储消息，当用户做出点赞、评论、关注动作后，生产者将事件发布到对应topic下，消费者订阅topic消费消息，将点赞、评论、关注的信息作为系统私信通知到目标用户，并存储到message表中
+- 当上述动作发生后，创建Event对象，设置主题，动作触发者id，目标类型和id，待通知用户id，生产者将封装好的事件发送到消息队列，消费者监听读取事件消息，并将消息转化为Message私信对象落裤
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -233,7 +239,7 @@ public class Message {
     private int toId;
     private String conversationId;
     private String content;
-    private int status; // 0 read, 1 unread, 2 deleted
+    private int status; // 0 unread, 1 read, 2 deleted
     private Date createTime;
 }
 ```

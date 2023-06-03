@@ -1,7 +1,9 @@
 package com.marvel.communityforum.controller;
 
 import com.marvel.communityforum.annotation.LoginRequired;
+import com.marvel.communityforum.entity.Event;
 import com.marvel.communityforum.entity.User;
+import com.marvel.communityforum.event.EventProducer;
 import com.marvel.communityforum.service.FollowService;
 import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityConstant;
@@ -17,6 +19,9 @@ import java.util.Map;
 @RestController
 public class FollowController implements CommunityConstant {
     @Autowired
+    private EventProducer eventProducer;
+
+    @Autowired
     private FollowService followService;
 
     @Autowired
@@ -30,6 +35,15 @@ public class FollowController implements CommunityConstant {
     public String follow(int subjectType, int subjectId) {
         User user = hostHolder.getUser();
         followService.follow(user.getId(), subjectType, subjectId);
+
+        Event event = new Event();
+        event.setTopic(TOPIC_FOLLOW)
+                .setUserId(user.getId())
+                .setSubjectType(subjectType)
+                .setSubjectId(subjectId)
+                .setSubjectUserId(subjectId);
+        eventProducer.fireEvent(event);
+
         return CommunityUtil.getJSONString(0, "follow succeeded");
     }
 

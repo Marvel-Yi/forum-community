@@ -11,6 +11,6 @@ public class Message {
     private int toId;
     private String conversationId;
     private String content;
-    private int status; // 0 read, 1 unread, 2 deleted
+    private int status; // 0 unread, 1 read, 2 deleted
     private Date createTime;
 }
