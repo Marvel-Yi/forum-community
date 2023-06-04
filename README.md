@@ -190,6 +190,30 @@ GET: `/notification/detail/{topic}`
 | current | 会话内当前页码      | 
 | limit   | 会话内每页可展示的通知数 |
 - 分页展示给定类别的系统通知的所有消息，对于其中的未读消息，在查询后批量更新为已读
+### 1.22 统计独立访客
+POST: `/stat/uv`
+
+| 参数    | 含义   |
+|-------|------|
+| begin | 开始日期 |
+| end   | 结束日期 |
+- 指定起止日期，统计独立访客数量，一个ip地址视为一个独立访客（unique visitor）
+- 使用Redis HyperLogLog数据结构来统计，相比于set集合，HyperLogLog空间开销极小，但统计不精确，会有0.81%的误差
+- 以日期为键，用一个HyperLogLog来统计单独一天的独立访客数，将多个HyperLogLog合并即可得到多天的独立访客数
+- HyperLogLog结合伯努利实验和极大似然估算法得到关系`n=2^k_max`，再使用调和平均、偏差修正等手段进行优化后，得到更精确的n的估算公式，在本场景下，n就是独立访客的数量。HyperLogLog会对传入的元素哈希出一个long值，本场景下传入的元素是用户ip，哈希结果的一部分位数表示轮次用于调和平均，剩下的位数则表示伯努利实验结果，第一个为1的位视为k，将每一轮的k_max代入估算公式中得到n
+- 使用拦截器实现HandlerInterceptor接口的preHandle方法，每次请求前，获取用户的ip来统计uv
+### 1.23 统计活跃用户
+POST: `/stat/dau`
+
+| 参数    | 含义   |
+|-------|------|
+| begin | 开始日期 |
+| end   | 结束日期 |
+- 指定起止日期，统计活跃用户，一个用户id视为一个活跃用户（active user）
+- 使用Redis BitMap数据结构来统计，相比于boolean数组，位图使用一个位上的1或0来表示true或false，空间开销更小
+- 以日期为键，用一个BitMap来统计单独一天的活跃用户，用userId作为BitMap的offset，每一位的1或0表示该userId代表的用户是否活跃，将多个BitMap进行OR位运算即可得到多天的活跃用户情况，通过bitCount统计1的位数，则可得到活跃用户的数量
+- 位运算bitOp和bitCount需要使用RedisTemplate的execute方法，传入RedisCallback接口实现类，重写接口方法doInRedis通过RedisConnection来完成
+- 使用拦截器实现HandlerInterceptor接口的preHandle方法，每次请求前，获取用户的id来统计dau
 ## 2 实体
 ### 2.1 User 用户
 ```java

@@ -9,6 +9,10 @@ public class RedisKeyUtil {
     private static final String PREFIX_LOGIN_TICKET = "ticket";
     private static final String PREFIX_USER = "user";
 
+    private static final String PREFIX_UV = "uv";
+
+    private static final String PREFIX_DAU = "dau";
+
     public static String getLikeKey(int subjectType, int subjectId) {
         return PREFIX_LIKE + SEPARATOR + subjectType + SEPARATOR + subjectId;
     }
@@ -31,5 +35,21 @@ public class RedisKeyUtil {
 
     public static String getUserKey(int userId) {
         return PREFIX_USER + SEPARATOR + userId;
+    }
+
+    public static String getDailyUVKEy(String date) {
+        return PREFIX_UV + SEPARATOR + date;
+    }
+
+    public static String getRangeUVKey(String beginDate, String endDate) {
+        return PREFIX_UV + SEPARATOR + beginDate + SEPARATOR + endDate;
+    }
+
+    public static String getDAUKey(String date) {
+        return PREFIX_DAU + SEPARATOR + date;
+    }
+
+    public static String getRangeAUKey(String beginDate, String endDate) {
+        return PREFIX_DAU + SEPARATOR + beginDate + SEPARATOR + endDate;
     }
 }
