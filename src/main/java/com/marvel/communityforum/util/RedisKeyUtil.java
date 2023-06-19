@@ -13,6 +13,8 @@ public class RedisKeyUtil {
 
     private static final String PREFIX_DAU = "dau";
 
+    private static final String PREFIX_POST_FOR_GRADING = "grading:post";
+
     public static String getLikeKey(int subjectType, int subjectId) {
         return PREFIX_LIKE + SEPARATOR + subjectType + SEPARATOR + subjectId;
     }
@@ -51,5 +53,9 @@ public class RedisKeyUtil {
 
     public static String getRangeAUKey(String beginDate, String endDate) {
         return PREFIX_DAU + SEPARATOR + beginDate + SEPARATOR + endDate;
+    }
+
+    public static String getPostForGradingKey() {
+        return PREFIX_POST_FOR_GRADING;
     }
 }

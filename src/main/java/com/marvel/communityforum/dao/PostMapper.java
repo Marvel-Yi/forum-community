@@ -20,4 +20,6 @@ public interface PostMapper {
     Post selectPostById(int id);
 
     int updateCommentCount(int postId, int commentCount);
+
+    int updateScore(int postId, double score);
 }

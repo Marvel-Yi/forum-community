@@ -55,4 +55,8 @@ public class PostService {
     public int updateCommentCount(int postId, int commentCount) {
         return postMapper.updateCommentCount(postId, commentCount);
     }
+
+    public int updateScore(int postId, double score) {
+        return postMapper.updateScore(postId, score);
+    }
 }

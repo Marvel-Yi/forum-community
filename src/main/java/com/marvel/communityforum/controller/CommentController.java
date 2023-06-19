@@ -8,7 +8,9 @@ import com.marvel.communityforum.service.CommentService;
 import com.marvel.communityforum.service.PostService;
 import com.marvel.communityforum.util.CommunityConstant;
 import com.marvel.communityforum.util.HostHolder;
+import com.marvel.communityforum.util.RedisKeyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +31,9 @@ public class CommentController implements CommunityConstant {
     @Autowired
     private PostService postService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @LoginRequired
     @PostMapping("/publish/{postId}")
     public String publishComment(@RequestBody Comment comment, @PathVariable("postId") int postId, HttpServletResponse response) throws Exception {
@@ -46,6 +51,8 @@ public class CommentController implements CommunityConstant {
         int subjectUserId = 0;
         if (comment.getSubjectType() == COMMENT_SUBJECT_TYPE_POST) {
             subjectUserId = postService.getPostById(postId).getUserId();
+
+            redisTemplate.opsForSet().add(RedisKeyUtil.getPostForGradingKey(), postId);
         } else if (comment.getSubjectType() == COMMENT_SUBJECT_TYPE_COMMENT) {
             subjectUserId = comment.getTargetId();
         }

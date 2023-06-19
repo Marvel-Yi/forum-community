@@ -52,4 +52,9 @@
         update post set comment_count = #{commentCount}
         where id = #{postId}
     </update>
+
+    <update id="updateScore">
+        update post set score = #{score}
+        where id = #{postId}
+    </update>
 </mapper>

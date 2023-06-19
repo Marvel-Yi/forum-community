@@ -11,7 +11,9 @@ import com.marvel.communityforum.service.UserService;
 import com.marvel.communityforum.util.CommunityConstant;
 import com.marvel.communityforum.util.CommunityUtil;
 import com.marvel.communityforum.util.HostHolder;
+import com.marvel.communityforum.util.RedisKeyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -34,6 +36,9 @@ public class PostController implements CommunityConstant {
     @Autowired
     private LikeService likeService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @LoginRequired
     @PostMapping("/publish")
     public String publishPost(String title, String content) {
@@ -44,6 +49,9 @@ public class PostController implements CommunityConstant {
         post.setContent(content);
         post.setCreateTime(new Date(System.currentTimeMillis()));
         postService.addPost(post);
+
+        // new post can be graded in time dimension
+        redisTemplate.opsForSet().add(RedisKeyUtil.getPostForGradingKey(), post.getId());
 
         return CommunityUtil.getJSONString(0, "publish succeeded");
     }

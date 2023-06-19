@@ -8,7 +8,9 @@ import com.marvel.communityforum.service.LikeService;
 import com.marvel.communityforum.util.CommunityConstant;
 import com.marvel.communityforum.util.CommunityUtil;
 import com.marvel.communityforum.util.HostHolder;
+import com.marvel.communityforum.util.RedisKeyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,6 +25,9 @@ public class LikeController implements CommunityConstant {
     private LikeService likeService;
     @Autowired
     private HostHolder hostHolder;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @LoginRequired
     @PostMapping("/like")
@@ -42,6 +47,10 @@ public class LikeController implements CommunityConstant {
                     .setSubjectUserId(subjectAuthorId)
                     .setData("postId", postId);
             eventProducer.fireEvent(event);
+        }
+
+        if (subjectType == COMMENT_SUBJECT_TYPE_POST) {
+            redisTemplate.opsForSet().add(RedisKeyUtil.getPostForGradingKey(), postId);
         }
 
         Map<String, Object> map = new HashMap<>();
