@@ -22,6 +22,10 @@ public class PostService {
         return postMapper.selectAllPosts(CommunityUtil.getOffset(current, limit), limit);
     }
 
+    public List<Post> getAllPostOrderByScore(int current, int limit) {
+        return postMapper.selectAllPostsOrderByScores(CommunityUtil.getOffset(current, limit), limit);
+    }
+
     public int getAllPostCount() {
         return postMapper.selectAllPostCount();
     }

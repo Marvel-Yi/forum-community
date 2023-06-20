@@ -9,6 +9,8 @@ import java.util.List;
 public interface PostMapper {
     List<Post> selectAllPosts(int offset, int limit);
 
+    List<Post> selectAllPostsOrderByScores(int offset, int limit);
+
     int selectAllPostCount();
 
     List<Post> selectUserPosts(int userId, int offset, int limit);

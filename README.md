@@ -2,13 +2,15 @@
 ## 0 项目简介
 ## 1 功能描述
 ### 1.1 首页展示
-GET: `/index?current&limit`
+GET: `/index?current&limit&sortingMode`
 
-| 参数 | 含义          |
-|---|-------------|
-| current | 当前页码        |
-| limit | 每页可展示的帖子文章数 |
+| 参数          | 含义          |
+|-------------|-------------|
+| current     | 当前页码        |
+| limit       | 每页可展示的帖子文章数 |
+| sortingMode | 帖子排序模式      |
 - 首页分页展示文章帖子
+- sortingMode默认为0，按时间排序，即新帖在前，sortingMode为1时，按热度排序，即热帖在前
 ### 1.2 用户注册
 POST: `/register`
 

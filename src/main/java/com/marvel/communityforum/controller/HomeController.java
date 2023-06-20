@@ -24,8 +24,14 @@ public class HomeController implements CommunityConstant {
 
     @GetMapping("/index")
     public List<Map<String, Object>> getIndexPage(@RequestParam(name = "current", defaultValue = "1") int current,
-                                                  @RequestParam(name = "limit", defaultValue = "5") int limit) {
-        List<Post> postList = postService.getAllPost(current, limit);
+                                                  @RequestParam(name = "limit", defaultValue = "5") int limit,
+                                                  @RequestParam(name = "sortingMode", defaultValue = "0") int sortingMode) {
+        List<Post> postList = null;
+        if (sortingMode == 0) {
+            postList = postService.getAllPost(current, limit);
+        } else if (sortingMode == 1) {
+            postList = postService.getAllPostOrderByScore(current, limit);
+        }
         List<Map<String, Object>> userPostMapList = new ArrayList<>();
         for (Post post : postList) {
             User user = userService.getUserById(post.getUserId());

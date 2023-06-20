@@ -16,6 +16,14 @@
         limit #{offset}, #{limit}
     </select>
 
+    <select id="selectAllPostsOrderByScores" resultType="Post">
+        select <include refid="selectFields"></include>
+        from post
+        where post_status != 2
+        order by post_type desc, score desc, create_time desc
+        limit #{offset}, #{limit}
+    </select>
+
     <select id="selectUserPosts" resultType="Post">
         select
         <include refid="selectFields"></include>
