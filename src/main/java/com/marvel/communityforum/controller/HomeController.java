@@ -49,4 +49,9 @@ public class HomeController implements CommunityConstant {
     public String getErrorPage() {
         return "500, server error";
     }
+
+    @GetMapping("/deny")
+    public String getDenyPage() {
+        return "no permission";
+    }
 }

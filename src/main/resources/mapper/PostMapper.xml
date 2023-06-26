@@ -65,4 +65,14 @@
         update post set score = #{score}
         where id = #{postId}
     </update>
+    
+    <update id="updateStatus">
+        update post set post_status = #{status}
+        where id = #{postId}
+    </update>
+
+    <update id="updateType">
+        update post set post_type = #{type}
+        where id = #{postId}
+    </update>
 </mapper>

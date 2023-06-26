@@ -118,4 +118,17 @@ public class PostController implements CommunityConstant {
 
         return postMap;
     }
+
+    @PostMapping("/essence")
+    public String setEssence(int postId) {
+        postService.updateType(postId, POST_TYPE_ESSENCE);
+        redisTemplate.opsForSet().add(RedisKeyUtil.getPostForGradingKey(), postId);
+        return CommunityUtil.getJSONString(0, "set essence post completed");
+    }
+
+    @PostMapping("/delete")
+    public String setDeleted(int postId) {
+        postService.updateStatus(postId, POST_STATUS_DELETED);
+        return CommunityUtil.getJSONString(0, "delete post completed");
+    }
 }

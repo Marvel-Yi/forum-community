@@ -63,7 +63,7 @@ public class PostGradingJob implements Job, CommunityConstant {
             return;
         }
 
-        int essenceScore = post.getPostStatus() == 1 ? 50 : 0;
+        int essenceScore = post.getPostType() == POST_TYPE_ESSENCE ? 50 : 0;
         int commentCnt = post.getCommentCount();
         long likeCnt = likeService.getLikeCount(COMMENT_SUBJECT_TYPE_POST, postId);
         double score = Math.log10(Math.max(essenceScore + commentCnt * 5 + likeCnt * 3, 1))

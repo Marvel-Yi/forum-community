@@ -1,9 +1,6 @@
 package com.marvel.communityforum.config;
 
-import com.marvel.communityforum.controller.interceptor.LoginRequiredInterceptor;
-import com.marvel.communityforum.controller.interceptor.LoginTicketInterceptor;
-import com.marvel.communityforum.controller.interceptor.MessageInterceptor;
-import com.marvel.communityforum.controller.interceptor.StatInterceptor;
+import com.marvel.communityforum.controller.interceptor.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -23,6 +20,9 @@ public class WebMvcConfigImpl implements WebMvcConfigurer {
     @Autowired
     private StatInterceptor statInterceptor;
 
+    @Autowired
+    private AdminAuthenticateInterceptor adminAuthenticateInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginTicketInterceptor).excludePathPatterns("/**/*.css", "/**/*.js",
@@ -33,5 +33,6 @@ public class WebMvcConfigImpl implements WebMvcConfigurer {
                 "/**/*.png", "/**/*.jpg", "/**/*.jpeg");
         registry.addInterceptor(statInterceptor).excludePathPatterns("/**/*.css", "/**/*.js",
                 "/**/*.png", "/**/*.jpg", "/**/*.jpeg");
+        registry.addInterceptor(adminAuthenticateInterceptor).addPathPatterns("/post/essence", "/post/delete");
     }
 }

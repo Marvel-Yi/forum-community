@@ -63,4 +63,12 @@ public class PostService {
     public int updateScore(int postId, double score) {
         return postMapper.updateScore(postId, score);
     }
+
+    public int updateStatus(int postId, int status) {
+        return postMapper.updateStatus(postId, status);
+    }
+
+    public int updateType(int postId, int type) {
+        return postMapper.updateType(postId, type);
+    }
 }

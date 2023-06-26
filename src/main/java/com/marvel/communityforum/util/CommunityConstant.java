@@ -34,4 +34,10 @@ public interface CommunityConstant {
     String TOPIC_FOLLOW = "follow";
 
     int SYSTEM_USER_ID = 1;
+
+    int USER_TYPE_ADMIN = 2;
+
+    int POST_STATUS_DELETED = 2;
+
+    int POST_TYPE_ESSENCE = 1;
 }
