@@ -27,9 +27,9 @@ public class HomeController implements CommunityConstant {
                                                   @RequestParam(name = "limit", defaultValue = "5") int limit,
                                                   @RequestParam(name = "sortingMode", defaultValue = "0") int sortingMode) {
         List<Post> postList = null;
-        if (sortingMode == 0) {
+        if (sortingMode == SORTING_MODE_TIME) {
             postList = postService.getAllPost(current, limit);
-        } else if (sortingMode == 1) {
+        } else if (sortingMode == SORTING_MODE_SCORE) {
             postList = postService.getAllPostOrderByScore(current, limit);
         }
         List<Map<String, Object>> userPostMapList = new ArrayList<>();

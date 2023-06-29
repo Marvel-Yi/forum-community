@@ -62,4 +62,16 @@ public class PostMapperTest {
         post.setScore(0);
         System.out.println(postMapper.insertPost(post));
     }
+
+    @Test
+    public void batchInsertPost() {
+        for (int i = 0; i < 200000; i++) {
+            Post post = new Post();
+            post.setUserId(10);
+            post.setTitle("Stress Test Post " + i);
+            post.setContent("压力测试贴");
+            post.setCreateTime(new Date(System.currentTimeMillis()));
+            postMapper.insertPost(post);
+        }
+    }
 }

@@ -11,8 +11,9 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.BoundSetOperations;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -70,5 +71,28 @@ public class PostGradingJob implements Job, CommunityConstant {
                 + (post.getCreateTime().getTime() - DATE_OF_ESTABLISHMENT.getTime()) / (1000 * 3600 * 24);
 
         postService.updateScore(postId, score);
+
+        // delete hot posts from redis cache as grading job may update their rankings
+        deleteHotPostRedisCache();
+    }
+
+    private void deleteHotPostRedisCache() {
+        Long delCount = (Long) redisTemplate.execute(new RedisCallback() {
+            @Override
+            public Object doInRedis(RedisConnection connection) throws DataAccessException {
+                ScanOptions scanOptions = ScanOptions.scanOptions()
+                        .match(RedisKeyUtil.PREFIX_HOT_POST + RedisKeyUtil.SEPARATOR + "*")
+                        .count(5)
+                        .build();
+                Cursor<byte[]> cursor = connection.scan(scanOptions);
+                long delCnt = 0;
+                while (cursor.hasNext()) {
+                    connection.del(cursor.next());
+                    delCnt++;
+                }
+                return delCnt;
+            }
+        });
+        logger.debug("number of hot post redis key deleted: " + delCount);
     }
 }

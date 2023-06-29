@@ -12,7 +12,7 @@
         <include refid="selectFields"></include>
         from post
         where post_status != 2
-        order by post_type desc, create_time desc
+        order by create_time desc
         limit #{offset}, #{limit}
     </select>
 
@@ -20,7 +20,7 @@
         select <include refid="selectFields"></include>
         from post
         where post_status != 2
-        order by post_type desc, score desc, create_time desc
+        order by score desc, create_time desc
         limit #{offset}, #{limit}
     </select>
 
@@ -29,7 +29,7 @@
         <include refid="selectFields"></include>
         from post
         where user_id = #{userId} and post_status != 2
-        order by post_type desc, create_time desc
+        order by create_time desc
         limit #{offset}, #{limit}
     </select>
 

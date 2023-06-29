@@ -1,7 +1,7 @@
 package com.marvel.communityforum.util;
 
 public class RedisKeyUtil {
-    private static final String SEPARATOR = ":";
+    public static final String SEPARATOR = ":";
     private static final String PREFIX_LIKE = "like";
     private static final String PREFIX_LIKE_USER = "like:user";
     private static final String PREFIX_FANS = "fans";
@@ -14,6 +14,10 @@ public class RedisKeyUtil {
     private static final String PREFIX_DAU = "dau";
 
     private static final String PREFIX_POST_FOR_GRADING = "grading:post";
+
+    public static final String PREFIX_HOT_POST = "hot:post";
+
+    private static final String PREFIX_POST_TOTAL_COUNT = "post:count";
 
     public static String getLikeKey(int subjectType, int subjectId) {
         return PREFIX_LIKE + SEPARATOR + subjectType + SEPARATOR + subjectId;
@@ -57,5 +61,13 @@ public class RedisKeyUtil {
 
     public static String getPostForGradingKey() {
         return PREFIX_POST_FOR_GRADING;
+    }
+
+    public static String getHotPostKey(int offset, int limit) {
+        return PREFIX_HOT_POST + SEPARATOR + offset + SEPARATOR + limit;
+    }
+
+    public static String getPostTotalCountKey() {
+        return PREFIX_POST_TOTAL_COUNT;
     }
 }

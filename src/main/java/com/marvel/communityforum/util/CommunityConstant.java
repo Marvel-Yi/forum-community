@@ -40,4 +40,8 @@ public interface CommunityConstant {
     int POST_STATUS_DELETED = 2;
 
     int POST_TYPE_ESSENCE = 1;
+
+    int SORTING_MODE_SCORE = 1;
+
+    int SORTING_MODE_TIME = 0;
 }

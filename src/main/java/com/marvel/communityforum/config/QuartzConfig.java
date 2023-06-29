@@ -28,7 +28,7 @@ public class QuartzConfig {
         factoryBean.setJobDetail(postGradingJobDetail);
         factoryBean.setName("postGradingTrigger");
         factoryBean.setGroup("communityTriggerGroup");
-        factoryBean.setRepeatInterval(1000 * 60 * 120); // 2 hours interval
+        factoryBean.setRepeatInterval(1000 * 60 * 60); // 1 hour interval
         factoryBean.setJobDataMap(new JobDataMap());
         return factoryBean;
     }

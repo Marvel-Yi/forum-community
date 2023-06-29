@@ -203,7 +203,7 @@ POST: `/stat/uv`
 - 指定起止日期，统计独立访客数量，一个ip地址视为一个独立访客（unique visitor）
 - 使用Redis HyperLogLog数据结构来统计，相比于set集合，HyperLogLog空间开销极小，但统计不精确，会有0.81%的误差
 - 以日期为键，用一个HyperLogLog来统计单独一天的独立访客数，将多个HyperLogLog合并即可得到多天的独立访客数
-- HyperLogLog结合伯努利实验和极大似然估算法得到关系`n=2^k_max`，再使用调和平均、偏差修正等手段进行优化后，得到更精确的n的估算公式，在本场景下，n就是独立访客的数量。HyperLogLog会对传入的元素哈希出一个long值，本场景下传入的元素是用户ip，哈希结果的一部分位数表示轮次用于调和平均，剩下的位数则表示伯努利实验结果，第一个为1的位视为k，将每一轮的k_max代入估算公式中得到n
+- HyperLogLog结合伯努利实验和极大似然估算法得到关系`n=2^k_max`，再使用调和平均（减轻极大异常值的影响）、偏差修正等手段进行优化后，得到更精确的n的估算公式，在本场景下，n就是独立访客的数量。HyperLogLog会对传入的元素哈希出一个long值，本场景下传入的元素是用户ip，哈希结果的一部分位数表示轮次用于调和平均，剩下的位数则表示伯努利实验结果，第一个为1的位视为k，将每一轮的k_max代入估算公式中得到n
 - 使用拦截器实现HandlerInterceptor接口的preHandle方法，每次请求前，获取用户的ip来统计uv
 ### 1.23 统计活跃用户
 POST: `/stat/dau`
@@ -238,6 +238,28 @@ POST: `/post/delete`
 - 热度与发布时间、评论数、点赞数、是否被管理员设为精华帖有关，因此，只有发新帖、发评论、点赞、加精等操作后，帖子的热度才会发生变化，把这部分帖子的id存入redis set中去重，以便定期取出计算热度，如果某个时间段比如凌晨没有需要更新热度的帖子，则记录日志提前结束任务
 - 任务开始时记录日志，把redis set里需要计算热度的帖子取出，发布时间新，评论数多，点赞数多，被设为精华，都有利于热度的增加，根据公式计算热度后，把热度score落库post表，任务结束前记录日志
 - 使用spring quartz框架基于线程池实现定时任务的调度，首先实现Job接口重写execute方法，方法里的逻辑是定时任务的内容，然后配置QuartzConfig配置类，通过@Bean注解和FactoryBean装配好JobDetail和SimpleJobTrigger实例，前者配置任务细节如Job类、任务名任务组、持久化等，后者配置触发器信息如JobDetail任务细节类、触发器定期触发的时间间隔RepeatInterval、触发器名触发器组等
+### 1.28 多级缓存
+- 使用Caffeine本地缓存+Redis分布式缓存构建多级缓存，提升首页按热度查询帖子列表的性能，有利于构建scalable（本地缓存性能高）和reliable（多级缓存多级保障）的系统
+- 由于首页热帖会被频繁访问，且热帖更新的频率取决于线程池任务调度的间隔，直至下一次热帖计算任务开始前，热帖列表的排行都不会变化，即读多写少，因此很适合使用缓存加速查询，此外帖子的总数用于查询总页数，同样访问频繁，故一并放入多级缓存
+- 查询时，请求首先访问一级本地缓存，若命中则直接返回，否则查询二级缓存redis，若命中则返回，并把结果写入一级缓存，否则将进一步查询数据库，并依次把结果写入二级缓存和一级缓存后返回
+- 对于热帖的redis缓存，以offset和limit作为key，以便redis未命中作为参数传递到数据库查询，value存储offset和limit对应的那一页的热帖列表，由于首页访问是整存整取，故将热帖列表List整个序列化存入redis string
+- 当线程池定时任务重新计算了热帖分数，热帖列表将会发生变化，当用户发布新帖，帖子总页数也会发生变化，需要保证数据库和缓存的一致性。redis缓存采用cache-aside旁路缓存策略保证一致性，即先更新数据库后删除redis缓存。一级本地缓存由于设置了较短的过期时间，首页热帖列表的需求可以容忍牺牲一定的实时性，当一级缓存过期，将会把新数据写入从而保证一致性
+- 热帖计算定期执行后，根据cache-aside需要删除之前缓存到redis中的热帖，若之前用户访问了多页热帖，则redis就有多个键值对，这些key都有共同的业务前缀但有不同的offset和limit，value则是offset和limit对应的那一页的热帖集合。可以简单的使用keys命令把含有共同前缀pattern的所有热帖键找出来，但keys命令会阻塞redis主服务，当符合pattern的键数量很多时，将阻塞系统正常运行。因此采用不会阻塞的scan命令，用游标的方式分批次扫描符合pattern的key，具体通过调用redisTemplate的execute，重写接口方法使用connection和ScanOptions，设置match的pattern和每批次返回的键数目，将结果分批次扫描到Cursor，迭代Cursor结果里的键，逐个删除
+- Caffeine工作原理：
+  - 一方面，LRU不适合处理大量稀疏流量，比如大量只访问一次的巡检项目，将会排挤淘汰掉其他真正有用的数据项。另一方面，LFU不仅需要开销来维护和存储缓存项的访问次数，且对于曾经访问次数很高但热度已过的缓存项迟迟无法淘汰
+  - Caffeine采用Window-TinyLFU算法，结合了LRU和LFU的优势，改进了LRU和LFU的缺陷
+  - 首先使用Count-Min Sketch算法维护缓存项的访问次数，这个次数并非精确的，而是一个估计值，有效改进了LFU维护访问次数开销大的问题。具体来说，它会使用4个hash函数将缓存项的key映射到4个计数器，每次访问key，都将这4个计数器加一，而获取key的访问次数时，则取4个计数器中的最小值，计数器大小为4位，最大计数值为15，超过后不再增加空间占用小，因此得名TinyLFU。此外，当所有计数器的计数总和达到一定阈值后，将所有计数器的值减半，这是一种衰减机制，所以当数据热度过去后，缓存项将被衰减淘汰，这也是传统LFU无法解决的
+  - 接着整个算法划分为3个区域，Window Cache、Probation Cache、Protected Cache，三者都基于LRU。当新的缓存项写入时，会进入window cache，如果window cache已满，window cache的淘汰项将会进入probation cache，如果probation cache也满了，则window cache淘汰项将会和probation cache的淘汰项一起进行淘汰机制的比较，胜出者才能留在probation cache。此外，probation cache缓存项的访问次数达到一定阈值后，会直接升级到protected cache，如果此时protected cache满了，则protected cache的淘汰项将会降级到probation cache，如果probation cache又满，则protected cache降级项和probation cache淘汰项进行淘汰机制的比较，同样，胜出者留在probation cache
+  - W-TinyLFU淘汰机制为：从window cache和protected cache移出的缓存项称为candidate，而probation cache的淘汰项则称为victim，如果candidate的访问次数大于victim，则直接丢弃victim。而如果在candidate访问次数小于victim时，且candidate访问次数又小于5，则丢弃candidate，如果大于5，则在candidate和victim中随机丢弃一个
+  - 综上，W-TinyLFU综合了LRU和LFU的优点，将不同特性的数据写入不同的区域，高频访问的数据写入protected受到保护，新数据写入window也受到一定的保护，那么不太新和不高频的数据则进入probation接受观察。同时使用Count-Min Sketch估算访问次数节省存储资源，通过引入衰减机制避免了过时热点数据难以淘汰的问题
+- 使用JMeter进行本地压力测试，线程数设置为200，持续时间1分钟，数据库帖子总数为486836，对路径`/index?sortingMode=1`发送http get请求进行压测
+
+| 缓存策略       | 总请求数  | 平均响应时间/ms | p50   | p90   | p95   | p99   | 最小响应时间/ms | 最大响应时间/ms | 异常率 | 吞吐量qps  | 数据接收量kb/s | 数据发送量kb/s |
+|------------|-------|-----------|-------|-------|-------|-------|-----------|-----------|-----|---------|-----------|-------|
+| 无缓存        | 1300  | 9465      | 10164 | 11070 | 11150 | 11326 | 784       | 18641     | 0%  | **18**   | 51        | 2     |
+| 仅redis     | 21977 | 36        | 3     | 11    | 160   | 633   | 1         | 4766      | 0%  | **366** | 1035      | 48    |
+| redis+本地缓存 | 23537 | 4         | 2     | 5     | 8     | 71    | 1         | 242       | 0%  | **392** | 1108      | 51    |
+- 相比于无缓存的情况，多级缓存在响应时间上的表现有翻天覆地的提升，吞吐量更是翻了20多倍。而与仅使用redis缓存的情况相比，响应时间的各级指标均有提升，尤其平均响应时间和p99均缩短接近90%，吞吐量也提升了7%
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -370,4 +392,5 @@ CREATE TABLE `message` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
 ## 4 Redis
+### 4.1
 ## application.properties 配置项
