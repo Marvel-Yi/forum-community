@@ -259,7 +259,7 @@ POST: `/post/delete`
 | 无缓存        | 1300  | 9465      | 10164 | 11070 | 11150 | 11326 | 784       | 18641     | 0%  | **18**   | 51        | 2     |
 | 仅redis     | 21977 | 36        | 3     | 11    | 160   | 633   | 1         | 4766      | 0%  | **366** | 1035      | 48    |
 | redis+本地缓存 | 23537 | 4         | 2     | 5     | 8     | 71    | 1         | 242       | 0%  | **392** | 1108      | 51    |
-- 相比于无缓存的情况，多级缓存在响应时间上的表现有翻天覆地的提升，吞吐量更是翻了20多倍。而与仅使用redis缓存的情况相比，响应时间的各级指标均有提升，尤其平均响应时间和p99均缩短接近90%，吞吐量也提升了7%
+- 相比于无缓存，多级缓存在响应时间上的表现有了翻天覆地的提升，吞吐量更是翻了20多倍。而与仅使用redis缓存相比，响应时间的各级指标也均有提升，尤其平均响应时间和p99均缩短了接近90%，吞吐量提升7%
 ## 2 实体
 ### 2.1 User 用户
 ```java
@@ -393,4 +393,50 @@ CREATE TABLE `message` (
 ```
 ## 4 Redis
 ### 4.1
-## application.properties 配置项
+## 5 application.properties 配置项
+```properties
+# Data Source Properties
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/community?characterEncoding=utf-8&useSSL=false&serverTimezone=Hongkong
+spring.datasource.username
+spring.datasource.password
+spring.datasource.type=com.zaxxer.hikari.HikariDataSource
+spring.datasource.hikari.maximum-pool-size=15
+spring.datasource.hikari.minimum-idle=3
+spring.datasource.hikari.idle-timeout=3000
+
+# Mybatis Properties
+mybatis.mapper-locations=classpath:mapper/*.xml
+mybatis.type-aliases-package=com.marvel.communityforum.entity
+mybatis.configuration.use-generated-keys=true
+mybatis.configuration.map-underscore-to-camel-case=true
+
+# Logger
+logging.level.com.marvel.communityforum=info
+
+# Mail Properties
+spring.mail.host=smtp.163.com
+spring.mail.port=465
+spring.mail.username
+spring.mail.password
+spring.mail.protocol=smtps
+spring.mail.properties.mail.smtp.ssl.enable=true
+
+# Domain Properties
+community.domain=http://127.0.0.1:8080
+
+# Redis Properties
+spring.redis.database=6
+spring.redis.host=localhost
+spring.redis.port=6379
+
+# Kafka Properties
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=test-consumer-group
+spring.kafka.consumer.enable-auto-commit=true
+spring.kafka.consumer.auto-commit-interval=3000
+
+# Caffeine Properties
+caffeine.hotpost.max-size=10
+caffeine.hotpost.expire-seconds=300
+```
