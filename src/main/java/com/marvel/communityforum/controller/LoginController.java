@@ -22,7 +22,7 @@ public class LoginController implements CommunityConstant {
 
     @PostMapping("/register")
     public Map<String, Object> register(@RequestBody User user) {
-        return userService.reigster(user);
+        return userService.register(user);
     }
 
     @GetMapping("/activation/{userId}/{activationCode}")
